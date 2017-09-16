@@ -52,7 +52,7 @@ export const asyncRouterMap = [
     redirect: '/table/index',
     icon: 'tubiao',
     noDropdown: true,
-    children: [{ path: 'index', name: 'Table', component: _import('table/index'), meta: { role: ['admin'] }}]
+    children: [{ path: 'index', name: 'Table', component: _import('table/index'), meta: { permission: 'role.add' }}]
   },
 
   { path: '*', redirect: '/404', hidden: true }

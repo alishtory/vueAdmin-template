@@ -29,6 +29,7 @@
 
 <script>
 import { isvalidUsername } from '@/utils/validate'
+import { login } from '@/api/userinfo'
 
 export default {
   name: 'login',
@@ -64,12 +65,19 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('Login', this.loginForm).then(() => {
+          login(this.loginForm).then(response => {
             this.loading = false
+            this.$store.commit('SET_NAME', this.loginForm.username)
             this.$router.push({ path: '/' })
           }).catch(() => {
             this.loading = false
           })
+//          this.$store.dispatch('Login', this.loginForm).then(() => {
+//            this.loading = false
+//            this.$router.push({ path: '/' })
+//          }).catch(() => {
+//            this.loading = false
+//          })
         } else {
           console.log('error submit!!')
           return false
