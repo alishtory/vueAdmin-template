@@ -15,9 +15,13 @@ Vue.use(Router)
   * noDropdown : if `noDropdown:true` will not has submenu in the sidebar
   * meta : `{ role: ['admin'] }`  will control the page role
   **/
-export const constantRouterMap = [
-  { path: '/login', component: _import('login/index'), hidden: true },
-  { path: '/404', component: _import('404'), hidden: true },
+export const publicRouters = [
+  { path: '/login', component: _import('login/index'), hidden: true, meta: { access: true }},
+  { path: '/404', component: _import('404'), hidden: true, meta: { access: true }},
+  { path: '/403', component: _import('404'), hidden: true, meta: { access: true }}
+]
+
+export const menuRouters = [
   {
     path: '/',
     component: Layout,
@@ -25,16 +29,7 @@ export const constantRouterMap = [
     name: 'Dashboard',
     hidden: true,
     children: [{ path: 'dashboard', component: _import('dashboard/index') }]
-  }
-]
-
-export default new Router({
-  // mode: 'history', //后端支持可开
-  scrollBehavior: () => ({ y: 0 }),
-  routes: constantRouterMap
-})
-
-export const asyncRouterMap = [
+  },
   {
     path: '/example',
     component: Layout,
@@ -52,8 +47,28 @@ export const asyncRouterMap = [
     redirect: '/table/index',
     icon: 'tubiao',
     noDropdown: true,
-    children: [{ path: 'index', name: 'Table', component: _import('table/index'), meta: { role: ['admin'] }}]
+    children: [{ path: 'index', name: 'Table', component: _import('table/index'), meta: { permission: 'admin.table' }}]
   },
 
-  { path: '*', redirect: '/404', hidden: true }
+  { path: '*', redirect: '/404', hidden: true, meta: { access: true }}
 ]
+
+export default new Router({
+  // mode: 'history', //后端支持可开
+  scrollBehavior: () => ({ y: 0 }),
+  routes: publicRouters.concat(menuRouters)
+})
+
+/**
+ * 通过meta.permission判断是否与当前用户权限匹配
+ * @param permissions 权限集合
+ * @param route
+ */
+export function hasPermission(permissions, route) {
+  // meta:{permission:'user.add'} 表示这个路由需要 user.add 权限；没有配置的话说明都有权限
+  if (route.meta && route.meta.permission && permissions.indexOf(route.meta.permission) < 0) {
+    // 如果配置了meta.permission 而且 permissions里面没有route需要的权限，那么这个权限组没有这条路由的权限
+    return false
+  }
+  return true // 默认有权限
+}

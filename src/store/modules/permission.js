@@ -1,59 +1,40 @@
-import { asyncRouterMap, constantRouterMap } from '@/router/index'
+import { getUserInfo } from '@/api/user'
+import { menuRouters, hasPermission } from '@/router'
 
-/**
- * 通过meta.role判断是否与当前用户权限匹配
- * @param roles
- * @param route
- */
-function hasPermission(roles, route) {
-  if (route.meta && route.meta.role) {
-    return roles.some(role => route.meta.role.indexOf(role) >= 0)
-  } else {
-    return true
-  }
-}
-
-/**
- * 递归过滤异步路由表，返回符合用户角色权限的路由表
- * @param asyncRouterMap
- * @param roles
- */
-function filterAsyncRouter(asyncRouterMap, roles) {
-  const accessedRouters = asyncRouterMap.filter(route => {
-    if (hasPermission(roles, route)) {
+function filterMenus(permissions, routers) {
+  const accessMenus = routers.filter(route => {
+    if (hasPermission(permissions, route)) {
       if (route.children && route.children.length) {
-        route.children = filterAsyncRouter(route.children, roles)
+        route.children = filterMenus(permissions, route.children)
       }
       return true
     }
     return false
   })
-  return accessedRouters
+  return accessMenus
 }
 
 const permission = {
   state: {
-    routers: constantRouterMap,
-    addRouters: []
+    permissions: [],
+    permission_menus: []
   },
   mutations: {
-    SET_ROUTERS: (state, routers) => {
-      state.addRouters = routers
-      state.routers = constantRouterMap.concat(routers)
+    SET_PERMISSIONS: (state, permissions) => {
+      state.permissions = permissions
+      state.permission_menus = filterMenus(permissions, JSON.parse(JSON.stringify(menuRouters))) // 实现深拷贝
     }
   },
   actions: {
-    GenerateRoutes({ commit }, data) {
-      return new Promise(resolve => {
-        const { roles } = data
-        let accessedRouters
-        if (roles.indexOf('admin') >= 0) {
-          accessedRouters = asyncRouterMap
-        } else {
-          accessedRouters = filterAsyncRouter(asyncRouterMap, roles)
-        }
-        commit('SET_ROUTERS', accessedRouters)
-        resolve()
+    GetUserInfo({ commit }) {
+      return new Promise((resolve, reject) => {
+        getUserInfo().then(response => {
+          const data = response.data
+          commit('SET_PERMISSIONS', data.permissions)
+          resolve(response)
+        }).catch(error => {
+          reject(error)
+        })
       })
     }
   }

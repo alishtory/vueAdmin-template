@@ -5,14 +5,14 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import SidebarItem from './SidebarItem'
+
 export default {
   components: { SidebarItem },
   computed: {
-    ...mapGetters([
-      'permission_routers'
-    ])
+    permission_routers() {
+      return this.$store.getters.permission_menus
+    }
   }
 }
 </script>
